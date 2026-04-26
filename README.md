@@ -6,7 +6,7 @@ This project builds on my Modules 1-3 project, **AI110 Module 3 Show: Music Reco
 
 ## Title and Summary
 
-**Music Recommender RAG System** is a command-line AI music recommendation app. A user profile is converted into a retrieval query, the system searches the catalog for relevant songs, and the recommender generates grounded explanations using retrieved catalog evidence.
+**Music Recommender RAG System** is a browser-based AI music recommendation app with a command-line fallback. A user profile is converted into a retrieval query, the system searches the catalog for relevant songs, and the recommender generates grounded explanations using retrieved catalog evidence.
 
 This matters because recommendation systems should be explainable, testable, and safe to run. Instead of only saying "here are songs," this project shows why songs were recommended, how confident the system is, and whether reliability checks passed.
 
@@ -57,19 +57,27 @@ Data flow:
    python -m pip install -r requirements.txt
    ```
 
-4. Run the app:
+4. Run the browser app:
+
+   ```bash
+   streamlit run src/app.py
+   ```
+
+   Then open the local URL Streamlit prints, usually `http://localhost:8501`.
+
+5. Optional: run the terminal version:
 
    ```bash
    python -m src.main
    ```
 
-5. Run tests:
+6. Run tests:
 
    ```bash
    pytest -q
    ```
 
-The app writes runtime logs to `recommender.log`.
+Both app versions write runtime logs to `recommender.log`.
 
 ## Sample Interactions
 
@@ -167,6 +175,14 @@ What surprised me while testing reliability was how much the final ranking depen
 AI was helpful when suggesting that the project should use RAG because retrieval fits naturally with a catalog-based recommender. That suggestion improved the project because explanations became grounded in real song metadata instead of generic text.
 
 One flawed AI suggestion was to treat the original placeholder `Recommender.recommend()` method as if it already implemented meaningful ranking. After checking the code manually, I found that it only returned the first `k` songs. I corrected that by implementing scoring, retrieval, confidence, and tests.
+
+## Portfolio Reflection
+
+This project shows that I can take a basic AI prototype and turn it into a more reliable, explainable system. I added retrieval-grounded recommendations, confidence scoring, logging, tests, and documentation so the system is easier to evaluate and understand. It also shows that I think about AI beyond just making outputs: I care about reliability, limitations, and whether a human can understand why the system made a recommendation.
+
+## Video Walkthrough
+
+Loom video: [Add your Loom link here]
 
 ## Reflection
 
