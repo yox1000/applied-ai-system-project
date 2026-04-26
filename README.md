@@ -182,7 +182,7 @@ This project shows that I can take a basic AI prototype and turn it into a more 
 
 ## Video Walkthrough
 
-Loom video: [Add your Loom link here]
+Loom video: https://www.loom.com/share/18c4206a3ae74f1d9aa829ea7aa0d037
 
 ## Reflection
 
