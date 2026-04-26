@@ -1,253 +1,175 @@
-# 🎵 Music Recommender Simulation
+# Music Recommender RAG System
 
-## Project Summary
+## Original Project
 
-In this project you will build and explain a small music recommender system.
+This project builds on my Modules 1-3 project, **AI110 Module 3 Show: Music Recommender Simulation Starter**. The original version loaded a small CSV song catalog, compared songs to a user taste profile, scored each song with content-based rules, and printed ranked recommendations. Its goal was to demonstrate how simple AI-style recommender logic can turn structured song metadata into personalized results.
 
-Your goal is to:
+## Title and Summary
 
-- Represent songs and a user "taste profile" as data
-- Design a scoring rule that turns that data into recommendations
-- Evaluate what your system gets right and wrong
-- Reflect on how this mirrors real world AI recommenders
+**Music Recommender RAG System** is a command-line AI music recommendation app. A user profile is converted into a retrieval query, the system searches the catalog for relevant songs, and the recommender generates grounded explanations using retrieved catalog evidence.
 
-Replace this paragraph with your own summary of what your version does.
+This matters because recommendation systems should be explainable, testable, and safe to run. Instead of only saying "here are songs," this project shows why songs were recommended, how confident the system is, and whether reliability checks passed.
 
-![Progress screenshot](./module3showpicture.png)
-![High Energy Pop screenshot](./show31.png)
-![Chill Lofi screenshot](./show32.png)
-![Deep Intense Rock screenshot](./show33.png)
+## Advanced AI Feature
 
----
+The advanced feature is **Retrieval-Augmented Generation (RAG)** integrated into the main recommendation workflow.
 
-## How The System Works
+The system does not use retrieval as a separate script. Every recommendation created by `Recommender.recommend_with_context()` retrieves similar catalog songs, calculates a confidence score, and generates an explanation grounded in that retrieved evidence. The retrieved songs affect what the app prints as the final AI explanation.
 
-In the real world, recommendation systems combine user preferences, item attributes, and patterns from listener behavior to suggest what a person will enjoy next. For this simulation, the plan is to build a simple content-based recommender that uses a small song catalog and a user taste profile to find the closest matches.
+## Architecture Overview
 
-The process is:
+```mermaid
+flowchart TD
+    A[Human user profile] --> B[Guardrails and validation]
+    B --> C[Song catalog loader]
+    C --> D[Content-based scorer]
+    D --> E[Retriever]
+    E --> F[RAG explanation generator]
+    F --> G[Recommendations with score, confidence, and evidence]
+    G --> H[Human review]
+    G --> I[Reliability evaluator]
+    I --> J[Test summary and logs]
+```
 
-1. Read the song catalog from `data/songs.csv`.
-2. Define a user taste profile with preferred genre, mood, and target values for audio features.
-3. Loop over every song and compute a score based on how closely the song matches the user's profile.
-4. Rank songs by their score.
-5. Output the top K recommendations.
+Data flow:
 
-Song features:
+1. A human supplies or selects a profile such as genre, mood, target energy, and acoustic preference.
+2. The app validates the input and loads `data/songs.csv`.
+3. The scorer ranks songs using genre, mood, energy, tempo, valence, danceability, and acousticness.
+4. The retriever finds catalog songs that support each recommendation as evidence.
+5. The explanation generator creates a grounded recommendation explanation.
+6. The evaluator checks whether representative profiles return expected genres, moods, confidence levels, and retrieved context.
 
-- `genre`
-- `mood`
-- `energy`
-- `tempo_bpm`
-- `valence`
-- `danceability`
-- `acousticness`
+## Setup Instructions
 
-UserProfile features:
+1. Clone or open this repository.
 
-- preferred `genre`
-- preferred `mood`
-- preferred `energy`
-- preferred `tempo_bpm`
-- preferred `valence`
-- preferred `danceability`
-- preferred `acousticness`
-
-This system prioritizes a clear content-based match. Genre and mood are used as strong categorical signals, while energy, tempo, valence, danceability, and acousticness are used to fine-tune similarity so the final ranking surfaces mellow, chill tracks that feel like the user’s preferred vibe.
-
-### Algorithm Recipe
-
-1. Load songs from `data/songs.csv`.
-2. Define a user profile with preferred genre, mood, and target values for the numerical audio features.
-3. For each song:
-   - award points for matching genre and mood
-   - calculate distance from the user’s target energy, tempo, valence, danceability, and acousticness
-   - combine categorical matches and numeric proximity into a single score
-4. Sort songs by descending score.
-5. Return the top K songs as recommendations.
-
-### Expected biases
-
-- The model will favor genres and moods explicitly listed in the user profile, so it can be biased toward the user's declared favorite styles.
-- Songs with missing or weak metadata are disadvantaged because this approach relies heavily on song attributes.
-- The system may also under-recommend diverse or unexpected music, since it prefers songs that are very similar to the user’s profile.
-
----
-
-## Getting Started
-
-### Setup
-
-1. Create a virtual environment (optional but recommended):
+2. Create a virtual environment:
 
    ```bash
-   python -m venv .venv
-   source .venv/bin/activate      # Mac or Linux
-   .venv\Scripts\activate         # Windows
+   python3 -m venv .venv
+   source .venv/bin/activate
+   ```
 
-2. Install dependencies
+3. Install dependencies:
 
-```bash
-pip install -r requirements.txt
+   ```bash
+   python -m pip install -r requirements.txt
+   ```
+
+4. Run the app:
+
+   ```bash
+   python -m src.main
+   ```
+
+5. Run tests:
+
+   ```bash
+   pytest -q
+   ```
+
+The app writes runtime logs to `recommender.log`.
+
+## Sample Interactions
+
+### Example 1: High-Energy Pop
+
+Input profile:
+
+```python
+UserProfile("pop", "happy", 0.9, likes_acoustic=False)
 ```
 
-3. Run the app:
+Output excerpt:
 
-```bash
-python -m src.main
+```text
+1. Sunrise City by Neon Echo
+   Score: 4.81
+   Confidence: 62%
+   Retrieved evidence: Gym Hero, Rooftop Lights, Bassline Bounce
+   AI explanation: Sunrise City by Neon Echo scored 4.81 with 62% confidence because genre match, mood match, energy close to 0.90, and acousticness close to 0.20.
 ```
 
-### Running Tests
+### Example 2: Chill Lofi
 
-Run the starter tests with:
+Input profile:
 
-```bash
-pytest
+```python
+UserProfile("lofi", "chill", 0.25, likes_acoustic=True)
 ```
 
-You can add more tests in `tests/test_recommender.py`.
+Output excerpt:
 
----
+```text
+1. Library Rain by Paper Lanterns
+   Score: 5.09
+   Confidence: 66%
+   Retrieved evidence: Midnight Coding, Spacewalk Thoughts, Focus Flow
+   AI explanation: Library Rain scored highly because it matches lofi/chill preferences and is close to the requested low-energy acoustic sound.
+```
 
-## Experiments You Tried
+### Example 3: Deep Intense Rock
 
-Use this section to document the experiments you ran. For example:
+Input profile:
 
-- What happened when you changed the weight on genre from 2.0 to 0.5
-- What happened when you added tempo or valence to the score
-- How did your system behave for different types of users
+```python
+UserProfile("rock", "intense", 0.85, likes_acoustic=False)
+```
 
----
+Output excerpt:
 
-## Limitations and Risks
+```text
+1. Storm Runner by Voltline
+   Score: 5.39
+   Confidence: 70%
+   Retrieved evidence: Gym Hero, Bassline Bounce, Sunset Carnival
+   AI explanation: Storm Runner scored highly because it matches rock/intense preferences and has energy close to the target.
+```
 
-Summarize some limitations of your recommender.
+## Design Decisions
 
-Examples:
+I kept the original content-based recommender because it is transparent and easy to test. The RAG addition improves the system by retrieving nearby catalog examples and using them as evidence for explanations.
 
-- It only works on a tiny catalog
-- It does not understand lyrics or language
-- It might over favor one genre or mood
+The main trade-off is that this is not a large language model or production recommender. It uses a small catalog and template-based explanations, which makes it less flexible but easier to audit. For a classroom or portfolio project, that transparency is a strength because each recommendation can be traced back to scores and retrieved evidence.
 
-You will go deeper on this in your model card.
+## Reliability and Evaluation
 
----
+The project includes automated tests in `tests/test_recommender.py` and an integrated evaluator in `src/evaluator.py`.
+
+Current app evaluation:
+
+```text
+3 out of 3 evaluation cases passed; average top-result confidence was 66%.
+```
+
+The reliability checks verify:
+
+- the top song matches the expected genre
+- the top song matches the expected mood
+- the confidence score is above the threshold
+- the recommendation includes retrieved catalog evidence
+- invalid inputs, such as `k=0`, raise safe errors
+- out-of-range numeric preferences are clamped
+
+What worked: the system reliably found strong matches for high-energy pop, chill lofi, and intense rock profiles. What did not work perfectly: confidence scores are only estimates based on scoring rules, not true probabilities. I learned that even simple AI systems need tests because a recommendation can look reasonable while still failing a specific requirement.
+
+## Limitations, Bias, and Ethics
+
+The system is limited by its small catalog of 18 songs. It can over-favor exact genre and mood labels, which may reduce discovery and under-recommend related styles. It also does not use listening history, lyrics, artist background, popularity, or user feedback.
+
+The system could be misused if someone treated it like a complete personalization engine. To reduce that risk, the app logs what it does, exposes confidence scores, explains recommendations, and keeps the dataset small and inspectable.
+
+What surprised me while testing reliability was how much the final ranking depended on weights and labels. A song could have the right energy but lose to another song because of exact mood matching. That showed me why real AI systems need both automated checks and human review.
+
+## Collaboration With AI
+
+AI was helpful when suggesting that the project should use RAG because retrieval fits naturally with a catalog-based recommender. That suggestion improved the project because explanations became grounded in real song metadata instead of generic text.
+
+One flawed AI suggestion was to treat the original placeholder `Recommender.recommend()` method as if it already implemented meaningful ranking. After checking the code manually, I found that it only returned the first `k` songs. I corrected that by implementing scoring, retrieval, confidence, and tests.
 
 ## Reflection
 
-Read and complete `model_card.md`:
+This project taught me that AI problem-solving is not only about generating an answer. A useful system needs data flow, guardrails, logging, tests, and a way for humans to understand why the output was produced.
 
-[**Model Card**](model_card.md)
-
-Write 1 to 2 paragraphs here about what you learned:
-
-- about how recommenders turn data into predictions
-- about where bias or unfairness could show up in systems like this
-
-
----
-
-## 7. `model_card_template.md`
-
-Combines reflection and model card framing from the Module 3 guidance. :contentReference[oaicite:2]{index=2}  
-
-```markdown
-# 🎧 Model Card - Music Recommender Simulation
-
-## 1. Model Name
-
-Give your recommender a name, for example:
-
-> VibeFinder 1.0
-
----
-
-## 2. Intended Use
-
-- What is this system trying to do
-- Who is it for
-
-Example:
-
-> This model suggests 3 to 5 songs from a small catalog based on a user's preferred genre, mood, and energy level. It is for classroom exploration only, not for real users.
-
----
-
-## 3. How It Works (Short Explanation)
-
-Describe your scoring logic in plain language.
-
-- What features of each song does it consider
-- What information about the user does it use
-- How does it turn those into a number
-
-Try to avoid code in this section, treat it like an explanation to a non programmer.
-
----
-
-## 4. Data
-
-Describe your dataset.
-
-- How many songs are in `data/songs.csv`
-- Did you add or remove any songs
-- What kinds of genres or moods are represented
-- Whose taste does this data mostly reflect
-
----
-
-## 5. Strengths
-
-Where does your recommender work well
-
-You can think about:
-- Situations where the top results "felt right"
-- Particular user profiles it served well
-- Simplicity or transparency benefits
-
----
-
-## 6. Limitations and Bias
-
-Where does your recommender struggle
-
-Some prompts:
-- Does it ignore some genres or moods
-- Does it treat all users as if they have the same taste shape
-- Is it biased toward high energy or one genre by default
-- How could this be unfair if used in a real product
-
----
-
-## 7. Evaluation
-
-How did you check your system
-
-Examples:
-- You tried multiple user profiles and wrote down whether the results matched your expectations
-- You compared your simulation to what a real app like Spotify or YouTube tends to recommend
-- You wrote tests for your scoring logic
-
-You do not need a numeric metric, but if you used one, explain what it measures.
-
----
-
-## 8. Future Work
-
-If you had more time, how would you improve this recommender
-
-Examples:
-
-- Add support for multiple users and "group vibe" recommendations
-- Balance diversity of songs instead of always picking the closest match
-- Use more features, like tempo ranges or lyric themes
-
----
-
-## 9. Personal Reflection
-
-A few sentences about what you learned:
-
-- What surprised you about how your system behaved
-- How did building this change how you think about real music recommenders
-- Where do you think human judgment still matters, even if the model seems "smart"
-
+It also changed how I think about recommenders. Even a small recommender can feel intelligent when it combines structured metadata with clear ranking rules, but the system still reflects the assumptions and limitations of its data and scoring design.

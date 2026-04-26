@@ -1,45 +1,72 @@
-# 🎧 Model Card: Music Recommender Simulation
+# Model Card: Music Recommender RAG System
 
 ## Model Name
 
-**Energy-Genre MelodyRanker**
+**CatalogGrounded MelodyRanker**
 
-## Goal / Task
+## Intended Use
 
-This recommender tries to suggest songs that best match a user’s favorite genre, mood, and target energy level. It is designed to predict which songs in a small catalog are most likely to feel right for someone who can express those preferences.
+This system recommends songs from a small classroom catalog based on a user's preferred genre, mood, target energy, and acoustic preference. It is intended for learning, portfolio demonstration, and analysis of how recommenders can be made more explainable.
 
-## Data Used
+It is not intended for production music streaming, real user profiling, or high-stakes personalization.
 
-The model uses a dataset of 18 songs from `data/songs.csv`. Each song includes features such as genre, mood, energy, tempo, valence, danceability, and acousticness. The dataset covers a modest variety of styles including pop, lofi, rock, jazz, synthwave, classical, folk, hip hop, world, metal, R&B, reggaeton, and ambient. It is limited in size, lacks user ratings and listening history, and does not represent the full diversity of musical taste.
+## How It Works
 
-## Algorithm Summary
+The model uses a content-based scoring system. It awards points for exact genre and mood matches, then adds points when numeric audio features are close to the user's target preferences.
 
-The model assigns each song a score based on how well it matches the user’s preferences. It gives bonus points when a song matches the requested genre and mood exactly, and it rewards songs whose energy level is close to the user’s target. Additional song characteristics like tempo, valence, danceability, and acousticness also contribute to the score based on closeness to target values or default values. The final ranking is the sum of those weighted contributions.
+The advanced feature is a RAG-style retrieval workflow. For every recommended song, the system retrieves similar catalog songs as supporting evidence and uses that evidence in the final explanation. This makes the output more transparent than a plain ranked list.
 
-## Observed Behavior / Biases
+## Data
 
-The system tends to favor songs that match energy very closely, which can narrow the recommendation list. Because energy is weighted heavily and uses a hard tolerance window, songs that are somewhat different in energy can be ignored entirely. Exact genre matching can also cause the model to miss related styles, and the system may underrepresent users who have more flexible or diverse musical tastes.
+The dataset is `data/songs.csv`, which contains 18 songs. Each song includes title, artist, genre, mood, energy, tempo, valence, danceability, and acousticness.
 
-## Evaluation Process
+The catalog includes pop, lofi, rock, ambient, jazz, synthwave, indie pop, classical, folk, hip hop, world, metal, R&B, reggaeton, and country. The dataset is small and hand-curated, so it cannot represent the full diversity of music or listener taste.
 
-I tested the recommender with a few distinct user profiles and compared the top recommendations for each. Example profiles included a high-energy pop listener, a low-energy lofi listener, and a deep intense rock listener. I reviewed whether the ranked songs reflected the expected genre and energy preferences, and I inspected the explanation strings to confirm how score contributions were being applied.
+## Strengths
 
-## Intended Use and Non-Intended Use
+- Easy to inspect because every recommendation has scores and reasons.
+- Grounded explanations use retrieved catalog evidence.
+- Built-in confidence scores help users interpret recommendation strength.
+- Automated tests and an evaluator check common success cases.
 
-This system is intended for classroom exploration and prototype evaluation of recommender scoring logic. It is useful for demonstrating how feature weights influence ranking in a small music catalog. It is not intended for production use, broad personalization, or real-world music streaming services because the dataset is small and the model does not use real user behavior, popularity, or large-scale genre relationships.
+## Limitations and Bias
 
-## Ideas for Improvement
+The system can overvalue exact labels like `genre` and `mood`. If a user's taste is flexible or if a song is mislabeled, the ranking may be too narrow. The small dataset can also create genre imbalance, because some styles have more nearby support songs than others.
 
-- Soften energy scoring so songs outside the exact tolerance still get partial credit.
-- Support broader genre similarity rather than exact string matching.
-- Add user listening history, acoustic preference handling, and diversity controls.
+The confidence score is not a true probability. It is a normalized version of the scoring rule, so it should be read as a rough strength signal.
+
+## Evaluation
+
+The app evaluates three representative profiles:
+
+- high-energy pop
+- chill lofi
+- intense rock
+
+Current result:
+
+```text
+3 out of 3 evaluation cases passed; average top-result confidence was 66%.
+```
+
+The automated tests check ranking behavior, grounded explanations, context retrieval, confidence clamping, invalid input handling, and evaluator output.
+
+## Ethical Considerations
+
+The system could be misused if someone presented it as a complete model of a person's musical identity. It only knows a tiny catalog and a few user preferences. To reduce that risk, the app exposes explanations, logs runtime behavior, and keeps recommendations auditable.
+
+The system also risks reinforcing narrow taste categories. A real recommender should include diversity controls, user feedback, and careful review of whether some genres or artists are systematically underrepresented.
+
+## Future Work
+
+- Add feedback so users can reject or approve recommendations.
+- Add diversity rules so the list does not become too repetitive.
+- Expand the catalog and include richer metadata.
+- Replace template explanations with an LLM, while still grounding the answer in retrieved catalog rows.
+- Add human evaluation forms for peer review.
 
 ## Personal Reflection
 
-My biggest learning moment was seeing how a single weight change could reshape the entire recommendation list. When energy became more important than genre, the model began favoring overall feel and tempo even more strongly, which highlighted how sensitive recommenders are to small scoring decisions.
+The most important lesson was that explainability changes how useful an AI system feels. A ranked list is helpful, but a ranked list with retrieved evidence, confidence, and tests is easier to trust and easier to debug.
 
-Using AI tools helped me more quickly identify where the scoring logic lived and how to phrase the bias analysis, but I still needed to double-check the actual code and the final text manually. I verified the model’s weight values, confirmed the exact genre and energy scoring rules, and ensured the model card matched the requested structure.
-
-I was surprised that even this simple algorithm could still produce recommendations that felt reasonable. By combining exact genre/mood match with numeric similarity on energy and other audio features, the model can surface songs that seem to fit a user’s vibe without any machine learning.
-
-If I extended this project, I would try adding a softer similarity function for energy, broader genre matching for related styles, and simple user feedback or history so the recommender can learn from what listeners actually prefer.
+AI assistance helped identify RAG as a good fit for a catalog recommender. One AI suggestion that needed correction was assuming the starter `Recommender` class already ranked songs. Manual code review showed that method was still a placeholder, so I implemented the actual ranking and added tests to verify it.
